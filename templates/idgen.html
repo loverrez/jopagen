@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="text-center mb-10">
+    <h1 class="text-4xl font-bold text-white mb-3 text-glow">ร้านค้าไอดี</h1>
+    <p class="text-slate-400">เลือกซื้อสินค้าที่คุณต้องการ สต็อกพร้อมส่ง</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    {% for c in categories %}
+    <div class="glass rounded-2xl overflow-hidden group hover:border-cyan-500/50 transition duration-300 flex flex-col">
+        <div class="relative h-48 overflow-hidden">
+            <img src="{{ c.image_url }}" alt="{{ c.name }}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110">
+            <div class="absolute top-2 right-2 bg-slate-900/80 backdrop-blur px-2 py-1 rounded text-xs font-bold text-white border border-slate-700">
+                เหลือ {{ stock_map[c.id] }} ชิ้น
+            </div>
+        </div>
+
+        <div class="p-5 flex flex-col flex-grow">
+            <h3 class="text-xl font-bold text-white mb-1">{{ c.name }}</h3>
+            <p class="text-sm text-slate-400 mb-4 line-clamp-2">{{ c.description }}</p>
+            
+            <div class="mt-auto flex justify-between items-center pt-3 border-t border-slate-700">
+                <span class="text-2xl font-bold text-green-400 font-mono">฿{{ "{:.2f}".format(c.price) }}</span>
+                {% if stock_map[c.id] > 0 %}
+                <button onclick="openBuyModal('{{ c.id }}', '{{ c.name }}', '{{ "{:.2f}".format(c.price) }}', '{{ stock_map[c.id] }}')" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg text-sm shadow-lg shadow-blue-500/30 transition transform hover:scale-[1.05]">ซื้อเลย</button>
+                {% else %}
+                <button disabled class="bg-red-600/50 text-white/70 font-bold py-2 px-4 rounded-lg text-sm cursor-not-allowed">สินค้าหมด</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div id="buy-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="glass p-8 rounded-2xl shadow-2xl w-full max-w-sm transform translate-y-5 transition-transform duration-300">
+        <h3 class="text-2xl font-bold text-white mb-2">ยืนยันการซื้อ</h3>
+        <p class="text-slate-400 mb-4 border-b border-slate-700 pb-4">
+            สินค้า: <span id="modal_cat_name" class="font-bold text-white"></span>
+        </p>
+        
+        <form method="POST" action="{{ url_for('idgen') }}">
+            <input type="hidden" name="category_id" id="modal_cat_id">
+            <div class="mb-4">
+                <label class="block text-slate-400 mb-2">ราคารวม</label>
+                <div class="w-full bg-slate-900/50 border border-slate-600 rounded-lg p-3 text-center text-green-400 font-bold text-xl">
+                    ฿<span id="modal_price">0.00</span>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label for="modal_qty" class="block text-slate-400 mb-2">จำนวนที่ต้องการ</label>
+                <input type="number" name="quantity" id="modal_qty" value="1" min="1" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-center text-white font-bold text-xl focus:border-blue-500 outline-none">
+                <p class="text-right text-xs text-slate-500 mt-1">คงเหลือ: <span id="modal_stock"></span></p>
+            </div>
+
+            <div class="flex gap-3">
+                <button type="button" onclick="closeBuyModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-lg font-bold">ยกเลิก</button>
+                <button type="submit" class="flex-1 bg-green-600 hover:bg-green-500 text-white py-3 rounded-lg font-bold shadow-lg shadow-green-500/30">ยืนยันซื้อ</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    let currentCategoryPrice = 0.0;
+    let currentMaxStock = 0;
+
+    function formatCurrency(amount) {
+        return parseFloat(amount).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    // ฟังก์ชันคำนวณและแสดงราคารวม
+    function updateTotalPrice() {
+        const qtyInput = document.getElementById('modal_qty');
+        let qty = parseInt(qtyInput.value);
+
+        // ป้องกันตัวเลขเกินสต็อก/ต่ำกว่า 1
+        if (qty > currentMaxStock) {
+            qty = currentMaxStock;
+            qtyInput.value = currentMaxStock; // อัปเดตค่าใน input
+        }
+        if (qty < 1 || isNaN(qty)) {
+            qty = 1;
+            qtyInput.value = 1; // อัปเดตค่าใน input
+        }
+
+        const totalPrice = currentCategoryPrice * qty;
+        document.getElementById('modal_price').innerText = formatCurrency(totalPrice);
+    }
+
+    function openBuyModal(id, name, price, stock) {
+        // Price ที่ส่งมาจาก Python คือราคาต่อหน่วย
+        currentCategoryPrice = parseFloat(price);
+        currentMaxStock = parseInt(stock);
+
+        document.getElementById('modal_cat_id').value = id;
+        document.getElementById('modal_cat_name').innerText = name;
+        document.getElementById('modal_qty').value = 1;
+        document.getElementById('modal_qty').max = currentMaxStock;
+        document.getElementById('modal_stock').innerText = currentMaxStock;
+        
+        updateTotalPrice();
+
+        const modal = document.getElementById('buy-modal');
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        modal.querySelector('.w-full').classList.remove('translate-y-5');
+
+        // Add event listener to update price when quantity changes
+        document.getElementById('modal_qty').oninput = updateTotalPrice;
+    }
+
+    function closeBuyModal() {
+        const modal = document.getElementById('buy-modal');
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        modal.querySelector('.w-full').classList.add('translate-y-5');
+        document.getElementById('modal_qty').oninput = null; // Clean up event listener
+    }
+</script>
+{% endblock %}

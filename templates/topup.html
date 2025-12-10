@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="text-center mb-10">
+    <h1 class="text-4xl font-bold text-white mb-3 text-glow">คุณต้องการจะเติมเงินแบบไหนดี?</h1>
+    <p class="text-slate-400">เลือกช่องทางการเติมเงินที่สะดวกสำหรับคุณ</p>
+</div>
+
+<div class="max-w-5xl mx-auto">
+    <div class="grid md:grid-cols-1 gap-8">
+        <!-- TrueMoney Angpao Card -->
+        <div class="glass rounded-2xl overflow-hidden group hover:border-blue-500/50 transition duration-300 border-2 border-transparent">
+            <div class="relative bg-gradient-to-br from-blue-600 to-purple-600 p-8">
+                <div class="absolute top-4 right-4 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse">
+                    ระบบอัตโนมัติ
+                </div>
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="bg-white/20 backdrop-blur p-4 rounded-xl">
+                        <i class="fa-solid fa-gift text-white text-4xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-3xl font-bold text-white">ซองอั่งเปา</h3>
+                        <p class="text-blue-100">TrueMoney Wallet</p>
+                    </div>
+                </div>
+                <div class="bg-white/10 backdrop-blur rounded-lg p-4 space-y-2 text-white">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-check-circle text-green-300"></i>
+                        <span class="text-sm">รับเงินทันที ไม่ต้องรอแอดมินอนุมัติ</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-check-circle text-green-300"></i>
+                        <span class="text-sm">กรอกลิงค์ซอง ระบบจะดึงเงินให้อัตโนมัติ</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-check-circle text-green-300"></i>
+                        <span class="text-sm">ปลอดภัย รวดเร็ว ทันใจ</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-8 bg-slate-800/50">
+                <form method="POST" class="space-y-5">
+                    <div>
+                        <label class="block text-slate-300 mb-3 font-semibold text-lg">
+                            <i class="fa-solid fa-link mr-2 text-blue-400"></i>
+                            วางลิงค์ซองอั่งเปา TrueMoney
+                        </label>
+                        <input 
+                            type="text" 
+                            name="voucher_url" 
+                            placeholder="https://gift.truemoney.com/campaign/?v=..." 
+                            required 
+                            class="w-full bg-slate-900 border-2 border-slate-600 rounded-xl p-4 text-white focus:border-blue-500 outline-none transition text-sm"
+                        >
+                        <p class="text-xs text-slate-500 mt-2">
+                            <i class="fa-solid fa-info-circle mr-1"></i>
+                            วิธีใช้: คัดลอกลิงก์ซองอั่งเปาแล้ววางที่นี่ ระบบจะรับเงินให้อัตโนมัติ
+                        </p>
+                    </div>
+
+                    <button 
+                        type="submit" 
+                        class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-500/30 transition transform hover:scale-[1.02] text-lg"
+                    >
+                        <i class="fa-solid fa-bolt mr-2"></i>
+                        เติมเงินทันที (ระบบอัตโนมัติ)
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- วิธีการใช้งาน -->
+    <div class="glass rounded-2xl p-8 mt-8 border border-slate-700">
+        <h3 class="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+            <div class="bg-yellow-500/20 p-2 rounded-lg">
+                <i class="fa-solid fa-lightbulb text-yellow-400 text-xl"></i>
+            </div>
+            วิธีการเติมเงินด้วยซองอั่งเปา
+        </h3>
+        
+        <div class="grid md:grid-cols-3 gap-6">
+            <div class="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+                <div class="bg-blue-500/20 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+                    <span class="text-blue-400 font-bold text-xl">1</span>
+                </div>
+                <h4 class="text-white font-bold mb-2">เปิด TrueMoney Wallet</h4>
+                <p class="text-slate-400 text-sm">สร้างซองอั่งเปาจากแอป TrueMoney Wallet ของคุณ</p>
+            </div>
+
+            <div class="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+                <div class="bg-purple-500/20 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+                    <span class="text-purple-400 font-bold text-xl">2</span>
+                </div>
+                <h4 class="text-white font-bold mb-2">คัดลอกลิงก์ซอง</h4>
+                <p class="text-slate-400 text-sm">กดแชร์และคัดลอกลิงก์ซองอั่งเปา</p>
+            </div>
+
+            <div class="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+                <div class="bg-green-500/20 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+                    <span class="text-green-400 font-bold text-xl">3</span>
+                </div>
+                <h4 class="text-white font-bold mb-2">วางลิงก์และกดส่ง</h4>
+                <p class="text-slate-400 text-sm">วางลิงก์ในช่องด้านบนแล้วกดเติมเงิน เงินจะเข้าทันที!</p>
+            </div>
+        </div>
+
+        <div class="mt-6 bg-yellow-900/20 border border-yellow-700/50 rounded-xl p-4">
+            <p class="text-yellow-200 text-sm flex items-start gap-2">
+                <i class="fa-solid fa-triangle-exclamation text-yellow-400 mt-0.5"></i>
+                <span><strong>หมายเหตุ:</strong> ซองอั่งเปาจะถูกใช้ทันทีเมื่อคุณกดส่ง กรุณาตรวจสอบยอดเงินให้ถูกต้องก่อนกดส่ง</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- ปุ่มติดต่อแอดมิน (กรณีมีปัญหา) -->
+    <div class="text-center mt-8">
+        <p class="text-slate-400 mb-4">มีปัญหาหรือต้องการความช่วยเหลือ?</p>
+        <a href="{{ site_config.contact_url | default('#') }}" target="_blank" class="inline-flex items-center gap-2 bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 px-6 rounded-lg transition shadow-lg">
+            <i class="fa-solid fa-headset"></i>
+            ติดต่อแอดมิน
+        </a>
+    </div>
+</div>
+
+{% endblock %}

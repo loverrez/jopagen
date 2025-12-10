@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ site_config.site_name | default('Roblox ID Gen Store') }}</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style> 
+        body { font-family: 'Kanit', sans-serif; } 
+        /* Glass effect */
+        .glass { background-color: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); }
+        
+        /* Custom Scrollbar for Drawer */
+        .drawer-scroll::-webkit-scrollbar { width: 6px; }
+        .drawer-scroll::-webkit-scrollbar-track { background: #0f172a; }
+        .drawer-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        .drawer-scroll::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans">
+
+    <nav class="bg-slate-800/80 backdrop-blur-md border-b border-slate-700 sticky top-0 z-40 shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <a href="/" class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 hover:opacity-80 transition flex items-center">
+                    {% if site_config.logo_url %}
+                        <img src="{{ site_config.logo_url }}" alt="Logo" class="h-10 w-auto object-contain">
+                    {% else %}
+                        <i class="fa-solid fa-gamepad mr-2 text-blue-400"></i>{{ site_config.site_name }}
+                    {% endif %}
+                </a>
+
+                <div class="hidden md:flex space-x-6 items-center">
+                    <a href="/" class="hover:text-blue-400 transition font-medium"><i class="fa-solid fa-house mr-1"></i> หน้าแรก</a>
+                    <a href="/idgen" class="hover:text-blue-400 transition font-medium"><i class="fa-solid fa-cart-shopping mr-1"></i> ร้านค้า</a>
+                    <a href="/topup" class="hover:text-blue-400 transition font-medium"><i class="fa-solid fa-wallet mr-1"></i> เติมเงิน</a>
+                    <a href="{{ site_config.contact_url }}" target="_blank" class="hover:text-blue-400 transition font-medium"><i class="fa-brands fa-discord mr-1"></i> ติดต่อเรา</a>
+                </div>
+
+                <div class="flex items-center">
+                    {% if current_user %}
+                        <div class="hidden md:block mr-4 text-right">
+                            <span class="block text-sm font-bold text-white">{{ current_user.username }}</span>
+                            <span class="block text-xs text-yellow-400">฿{{ "{:,.2f}".format(current_user.balance) }}</span>
+                        </div>
+                        <a href="/history" class="bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded text-sm mr-2 transition">ประวัติ</a>
+                        {% if current_user.role == 'admin' %}
+                            <a href="/admin" class="mr-2 text-yellow-400 border border-yellow-500/50 px-2 py-1 rounded bg-yellow-900/30 font-bold hover:bg-yellow-800/50 transition">[Admin]</a>
+                        {% endif %}
+                        <a href="/logout" class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm">ออก</a>
+                    {% else %}
+                        <a href="/login" class="text-blue-400 hover:text-white mr-4 font-semibold">เข้าสู่ระบบ</a>
+                        <a href="/register" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-sm font-bold shadow-md">สมัครสมาชิก</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow container mx-auto px-4 py-8 relative">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="p-4 mb-4 rounded bg-slate-800 border-l-4 {{ 'border-green-500' if category == 'success' else 'border-red-500' }} shadow-md animate-fade-in-down">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-slate-800 border-t border-slate-700 mt-auto py-6">
+        <div class="container mx-auto px-4 text-center text-slate-400">
+            <p class="font-medium">&copy; 2025 {{ site_config.site_name }}. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <div class="fixed bottom-6 right-6 z-[99]">
+        <button onclick="toggleSplitDrawer()" 
+            class="w-14 h-14 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white rounded-full shadow-lg shadow-blue-500/40 transition transform hover:scale-110 flex items-center justify-center group border border-white/10">
+            <i class="fa-solid fa-scissors text-2xl group-hover:rotate-180 transition duration-500"></i>
+        </button>
+    </div>
+
+    <div id="splitDrawerBackdrop" onclick="toggleSplitDrawer()" class="fixed inset-0 bg-black/60 z-[100] hidden backdrop-blur-sm transition-opacity"></div>
+
+    <div id="splitDrawer" class="fixed top-0 right-0 h-full w-full md:w-1/2 bg-slate-900 border-l border-slate-700 z-[101] transform translate-x-full transition-transform duration-300 shadow-2xl flex flex-col">
+        
+        <div class="p-5 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600/20 p-2 rounded-lg text-blue-400 border border-blue-500/30">
+                    <i class="fa-solid fa-scissors"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-white">Split Text Combo</h2>
+                    <p class="text-xs text-slate-400">แยก User:Pass และ Cookie</p>
+                </div>
+            </div>
+            <button onclick="toggleSplitDrawer()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition flex items-center justify-center">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <div class="flex-1 p-6 overflow-y-auto drawer-scroll space-y-4">
+            
+            <div class="flex justify-between items-center bg-slate-800 rounded-lg p-3 border border-slate-700">
+                <span class="text-sm text-slate-300">จำนวนบรรทัด: <span id="lineCount" class="text-blue-400 font-bold font-mono">0</span> Lines</span>
+                <button onclick="clearText()" class="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 hover:bg-red-900/20 px-2 py-1 rounded transition">
+                    <i class="fa-solid fa-trash-can"></i> ล้างข้อมูล
+                </button>
+            </div>
+
+            <div class="relative group">
+                <textarea id="comboInput" oninput="updateStats()" 
+                    class="w-full h-[300px] bg-slate-950 border border-slate-700 rounded-xl p-4 text-sm text-slate-300 font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition resize-none placeholder-slate-600 shadow-inner"
+                    placeholder="วาง Combo ที่นี่...&#10;Format: user:pass:cookie&#10;Format: email:pass:cookie"></textarea>
+                <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition">
+                    <button onclick="pasteText()" class="bg-slate-700 hover:bg-slate-600 text-xs text-white px-2 py-1 rounded border border-slate-600">Paste</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700 hover:border-blue-500/50 transition group">
+                    <div class="flex items-center gap-2 mb-3 text-blue-400 font-bold">
+                        <i class="fa-solid fa-user-lock"></i> User:Pass
+                    </div>
+                    <button onclick="downloadFile('userpass')" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-lg font-bold text-sm shadow-lg shadow-blue-500/20 transition flex items-center justify-center gap-2 transform active:scale-95">
+                        <i class="fa-solid fa-download"></i> ดาวน์โหลด .txt
+                    </button>
+                </div>
+
+                <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700 hover:border-cyan-500/50 transition group">
+                    <div class="flex items-center gap-2 mb-3 text-cyan-400 font-bold">
+                        <i class="fa-solid fa-cookie-bite"></i> Cookie
+                    </div>
+                    <button onclick="downloadFile('cookie')" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white py-2.5 rounded-lg font-bold text-sm shadow-lg shadow-cyan-500/20 transition flex items-center justify-center gap-2 transform active:scale-95">
+                        <i class="fa-solid fa-download"></i> ดาวน์โหลด .txt
+                    </button>
+                </div>
+            </div>
+            
+            <div class="mt-4 p-4 bg-blue-900/10 border border-blue-500/20 rounded-xl">
+                <h4 class="text-blue-200 font-bold text-sm mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info text-blue-400"></i> วิธีใช้งาน
+                </h4>
+                <ul class="text-xs text-slate-400 space-y-1.5 list-disc pl-5">
+                    <li>รองรับรูปแบบ <code>user:pass:cookie</code></li>
+                    <li>ระบบจะตัด <span class="text-blue-300">2 ส่วนแรก</span> เป็น <strong>User:Pass</strong></li>
+                    <li>ส่วนที่เหลือทั้งหมดด้านหลังจะถูกเก็บเป็น <strong>Cookie</strong></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle Drawer
+        function toggleSplitDrawer() {
+            const drawer = document.getElementById('splitDrawer');
+            const backdrop = document.getElementById('splitDrawerBackdrop');
+            const isOpen = !drawer.classList.contains('translate-x-full');
+
+            if (isOpen) {
+                drawer.classList.add('translate-x-full');
+                backdrop.classList.add('hidden');
+                document.body.style.overflow = ''; 
+            } else {
+                drawer.classList.remove('translate-x-full');
+                backdrop.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function updateStats() {
+            const text = document.getElementById('comboInput').value;
+            const lines = text.split('\n').filter(line => line.trim() !== '').length;
+            document.getElementById('lineCount').innerText = lines;
+        }
+
+        function clearText() {
+            if(document.getElementById('comboInput').value.trim() === '') return;
+            if(confirm('ต้องการล้างข้อมูลทั้งหมด?')) {
+                document.getElementById('comboInput').value = '';
+                updateStats();
+            }
+        }
+
+        async function pasteText() {
+            try {
+                const text = await navigator.clipboard.readText();
+                document.getElementById('comboInput').value = text;
+                updateStats();
+            } catch (err) {
+                alert('ไม่สามารถวางข้อความได้ กรุณากด Ctrl+V');
+            }
+        }
+
+        function downloadFile(type) {
+            const text = document.getElementById('comboInput').value;
+            if (!text.trim()) {
+                alert('กรุณาใส่ข้อมูล Combo ก่อนดาวน์โหลด');
+                return;
+            }
+
+            const lines = text.split('\n');
+            let content = '';
+            let count = 0;
+
+            lines.forEach(line => {
+                if (line.trim() && line.includes(':')) {
+                    const parts = line.trim().split(':');
+                    if (parts.length >= 3) {
+                        if (type === 'userpass') {
+                            content += `${parts[0]}:${parts[1]}\n`;
+                            count++;
+                        } else if (type === 'cookie') {
+                            const cookie = parts.slice(2).join(':');
+                            content += `${cookie}\n`;
+                            count++;
+                        }
+                    }
+                }
+            });
+
+            if (count === 0) {
+                alert('ไม่พบข้อมูลรูปแบบที่ถูกต้อง');
+                return;
+            }
+
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = type === 'userpass' ? 'user_pass.txt' : 'cookie.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

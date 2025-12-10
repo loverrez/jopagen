@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="glass rounded-lg p-3 mb-8 flex items-center gap-3 text-yellow-300 border border-yellow-500/20 shadow-[0_0_15px_rgba(234,179,8,0.1)]">
+    <div class="bg-yellow-500/20 p-2 rounded text-yellow-500"><i class="fa-solid fa-bullhorn"></i></div>
+    <marquee scrollamount="6" class="font-medium">{{ site_config.announcement }}</marquee>
+</div>
+
+<div class="relative w-full h-[350px] md:h-[450px] rounded-2xl overflow-hidden shadow-2xl mb-12 border border-slate-700/50 group">
+    <div id="slider" class="relative h-full w-full">
+        {% for banner in site_banners %}
+        <img src="{{ banner.url }}" class="slide-img absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 {% if loop.first %}opacity-100{% else %}opacity-0{% endif %}">
+        {% else %}
+        <img src="https://placehold.co/1200x400/1e293b/FFF?text=Please+Add+Banners+in+Admin+Panel" class="slide-img absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 opacity-100">
+        {% endfor %}
+    </div>
+    
+    <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
+    <div class="absolute bottom-10 left-8 md:left-12 z-10">
+        <h1 class="text-4xl md:text-6xl font-bold text-white mb-2 text-glow drop-shadow-lg">{{ site_config.site_name }}</h1>
+        <p class="text-cyan-200 text-lg md:text-xl mb-6 shadow-black drop-shadow-md">บริการจำหน่าย Account Roblox หลากหลายรูปแบบ</p>
+        <a href="/idgen" class="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold py-3 px-8 rounded-full shadow-lg shadow-cyan-500/30 transition transform hover:scale-105">
+            <i class="fa-solid fa-cart-shopping mr-2"></i> เลือกซื้อสินค้า
+        </a>
+    </div>
+</div>
+
+<div class="grid lg:grid-cols-3 gap-8">
+    <div class="lg:col-span-2 glass rounded-2xl p-6 shadow-xl">
+        <div class="flex justify-between items-center mb-6 border-b border-slate-700/50 pb-4">
+            <h2 class="text-2xl font-bold text-white"><i class="fa-solid fa-receipt text-cyan-400 mr-2"></i> รายการสั่งซื้อล่าสุด</h2>
+            <span class="text-xs font-mono text-green-400 bg-green-900/30 px-2 py-1 rounded animate-pulse">● Live</span>
+        </div>
+        <div class="overflow-hidden rounded-lg">
+            <table class="w-full text-left text-slate-300">
+                <thead class="bg-slate-800/80 text-slate-400 uppercase text-xs tracking-wider">
+                    <tr>
+                        <th class="p-3 pl-4">ลูกค้า</th>
+                        <th class="p-3">สินค้า</th>
+                        <th class="p-3">ราคา</th>
+                        <th class="p-3 text-right pr-4">เวลา</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-700/50">
+                    {% for order in orders %}
+                    <tr class="hover:bg-slate-700/30 transition duration-200">
+                        <td class="p-3 pl-4 font-bold text-slate-200">{{ order.user }}</td>
+                        <td class="p-3 text-sm">{{ order.item }}</td>
+                        <td class="p-3 text-yellow-400 font-mono font-bold">฿{{ "{:.0f}".format(order.price) }}</td>
+                        <td class="p-3 text-right pr-4 text-xs text-slate-500">{{ order.time }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" class="p-6 text-center text-slate-500">ยังไม่มีรายการสั่งซื้อ</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="glass rounded-2xl p-6 shadow-xl h-fit">
+        <h2 class="text-xl font-bold text-white mb-6 border-b border-slate-700/50 pb-4"><i class="fa-solid fa-shield-cat text-purple-400 mr-2"></i> ทำไมต้องเรา?</h2>
+        <div class="space-y-5">
+            <div class="flex items-start gap-4">
+                <div class="bg-blue-500/20 p-3 rounded-lg text-blue-400"><i class="fa-solid fa-bolt"></i></div>
+                <div>
+                    <h3 class="font-bold text-white">ส่งทันที</h3>
+                    <p class="text-sm text-slate-400">ระบบอัตโนมัติ ได้ของใน 1 วิ</p>
+                </div>
+            </div>
+            <div class="flex items-start gap-4">
+                <div class="bg-green-500/20 p-3 rounded-lg text-green-400"><i class="fa-solid fa-check-double"></i></div>
+                <div>
+                    <h3 class="font-bold text-white">ปลอดภัย 100%</h3>
+                    <p class="text-sm text-slate-400">สินค้าคัดเกรด ไม่มีการโกง</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Simple Slider Script
+    const slides = document.querySelectorAll('.slide-img');
+    let idx = 0;
+    if(slides.length > 1){
+        // Ensure only the first one is visible initially if more than one exists
+        slides.forEach((slide, index) => {
+            slide.classList.remove('opacity-100', 'opacity-0');
+            if (index === 0) {
+                slide.classList.add('opacity-100');
+            } else {
+                slide.classList.add('opacity-0');
+            }
+        });
+        
+        setInterval(() => {
+            slides[idx].classList.replace('opacity-100', 'opacity-0');
+            idx = (idx + 1) % slides.length;
+            slides[idx].classList.replace('opacity-0', 'opacity-100');
+        }, 5000);
+    }
+</script>
+{% endblock %}

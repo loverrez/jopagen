@@ -1,0 +1,441 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-7xl mx-auto" x-data="{ tab: 'dashboard' }">
+    <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <h1 class="text-3xl font-bold text-white"><i class="fa-solid fa-user-shield text-red-500"></i> Admin Panel</h1>
+        
+        <div class="flex bg-slate-800 p-1 rounded-lg border border-slate-700 overflow-x-auto max-w-full">
+            <button onclick="setTab('dashboard')" id="btn-dashboard" class="px-6 py-2 rounded-md text-sm font-bold transition text-slate-400 hover:text-white whitespace-nowrap">
+                <i class="fa-solid fa-chart-line mr-2"></i> Dashboard
+            </button>
+            <button onclick="setTab('topup_pending')" id="btn-topup_pending" class="px-6 py-2 rounded-md text-sm font-bold transition text-slate-400 hover:text-white whitespace-nowrap">
+                <i class="fa-solid fa-clock-rotate-left mr-2"></i> เติมเงินรออนุมัติ ({{ pending_topups|length }})
+            </button>
+            <button onclick="setTab('stock')" id="btn-stock" class="px-6 py-2 rounded-md text-sm font-bold transition text-slate-400 hover:text-white whitespace-nowrap">
+                <i class="fa-solid fa-box mr-2"></i> จัดการสินค้า
+            </button>
+            <button onclick="setTab('users')" id="btn-users" class="px-6 py-2 rounded-md text-sm font-bold transition text-slate-400 hover:text-white whitespace-nowrap">
+                <i class="fa-solid fa-users mr-2"></i> จัดการสมาชิก
+            </button>
+            <button onclick="setTab('settings')" id="btn-settings" class="px-6 py-2 rounded-md text-sm font-bold transition text-slate-400 hover:text-white whitespace-nowrap">
+                <i class="fa-solid fa-sliders mr-2"></i> ตั้งค่าเว็บไซต์
+            </button>
+        </div>
+    </div>
+    
+    <div id="tab-dashboard" class="space-y-8 animate-fade-in">
+        <h3 class="text-2xl font-bold text-white mb-6"><i class="fa-solid fa-signal text-blue-400 mr-2"></i> สถิติภาพรวม</h3>
+        <div class="grid md:grid-cols-4 gap-6">
+            <div class="glass p-6 rounded-xl border border-blue-700/50 shadow-lg relative">
+                <p class="text-sm text-slate-400">ยอดเติมเงินรวม (สำเร็จ)</p>
+                <h4 class="text-3xl font-extrabold text-blue-400 mt-1">฿{{ "{:,.2f}".format(stats.total_topup) }}</h4>
+                <i class="fa-solid fa-money-bill-transfer absolute top-4 right-4 text-blue-700/50 text-4xl"></i>
+            </div>
+            <div class="glass p-6 rounded-xl border border-green-700/50 shadow-lg relative">
+                <p class="text-sm text-slate-400">ยอดขายรวม (Revenue)</p>
+                <h4 class="text-3xl font-extrabold text-green-400 mt-1">฿{{ "{:,.2f}".format(stats.total_revenue) }}</h4>
+                <i class="fa-solid fa-sack-dollar absolute top-4 right-4 text-green-700/50 text-4xl"></i>
+            </div>
+            <div class="glass p-6 rounded-xl border border-yellow-700/50 shadow-lg relative">
+                <p class="text-sm text-slate-400">ยอดสั่งซื้อรวม (ครั้ง)</p>
+                <h4 class="text-3xl font-extrabold text-yellow-400 mt-1">{{ "{:,}".format(stats.total_orders_count) }}</h4>
+                <i class="fa-solid fa-receipt absolute top-4 right-4 text-yellow-700/50 text-4xl"></i>
+            </div>
+            <div class="glass p-6 rounded-xl border border-red-700/50 shadow-lg relative">
+                <p class="text-sm text-slate-400">สต็อกคงเหลือรวม (ชิ้น)</p>
+                <h4 class="text-3xl font-extrabold text-red-400 mt-1">{{ "{:,}".format(stats.total_stock_left) }}</h4>
+                <i class="fa-solid fa-boxes-stacked absolute top-4 right-4 text-red-700/50 text-4xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div id="tab-topup_pending" class="hidden space-y-8 animate-fade-in">
+        <h3 class="text-2xl font-bold text-white mb-6"><i class="fa-solid fa-clock-rotate-left text-yellow-400 mr-2"></i> รายการเติมเงินรออนุมัติ</h3>
+        <div class="glass p-6 rounded-2xl border border-slate-700 shadow-xl overflow-x-auto">
+            <table class="min-w-full text-left text-slate-300">
+                <thead class="bg-slate-900/50 text-slate-400 uppercase text-xs tracking-wider">
+                    <tr>
+                        <th class="p-3">#ID</th>
+                        <th class="p-3">Username</th>
+                        <th class="p-3">วิธีการ</th>
+                        <th class="p-3">จำนวนเงิน</th>
+                        <th class="p-3 text-right">ดำเนินการ</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-700/50">
+                    {% for topup in pending_topups %}
+                    <tr class="hover:bg-slate-700/30 transition">
+                        <td class="p-3 font-mono text-xs">{{ topup.id }}</td>
+                        <td class="p-3 font-bold text-white">{{ topup.user.username }}</td>
+                        <td class="p-3">{{ topup.method }}</td>
+                        <td class="p-3 text-green-400">฿{{ "{:.2f}".format(topup.amount) }}</td>
+                        <td class="p-3 text-right">
+                            <form method="POST" class="inline-block" onsubmit="return confirm('ยืนยันการอนุมัติเติมเงิน {{ topup.amount }} บาท?');">
+                                <input type="hidden" name="action" value="approve_topup">
+                                <input type="hidden" name="topup_id" value="{{ topup.id }}">
+                                <button type="submit" class="bg-green-600 hover:bg-green-500 text-white text-xs px-3 py-1 rounded-lg">
+                                    <i class="fa-solid fa-check mr-1"></i> อนุมัติ
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5" class="p-6 text-center text-slate-500">ไม่พบรายการเติมเงินที่รออนุมัติ</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="tab-stock" class="hidden space-y-8 animate-fade-in">
+        
+        <div class="glass p-6 rounded-2xl border border-slate-700 shadow-xl">
+            <h3 class="text-xl font-bold text-white mb-4 border-b border-slate-700 pb-2"><i class="fa-solid fa-layer-group text-orange-400 mr-2"></i> จัดการประเภทไอดี (แก้ไข/ลบ)</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-left text-slate-300">
+                    <thead class="bg-slate-900/50 text-slate-400 uppercase text-xs tracking-wider">
+                        <tr>
+                            <th class="p-3">#ID</th>
+                            <th class="p-3">รูปภาพ</th>
+                            <th class="p-3">ชื่อประเภท</th>
+                            <th class="p-3">ราคา</th>
+                            <th class="p-3 text-center">คงเหลือ</th>
+                            <th class="p-3 text-right">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-700/50">
+                        {% for cat in categories %}
+                        <tr class="hover:bg-slate-700/30 transition">
+                            <td class="p-3 font-mono text-xs">{{ cat.id }}</td>
+                            <td class="p-3">
+                                <img src="{{ cat.image_url }}" alt="" class="w-10 h-10 object-cover rounded bg-slate-800">
+                            </td>
+                            <td class="p-3 font-bold text-white">{{ cat.name }}</td>
+                            <td class="p-3 text-green-400">฿{{ "{:.2f}".format(cat.price) }}</td>
+                            <td class="p-3 text-center text-yellow-400">{{ stock_info.get(cat.id, 0) }}</td>
+                            <td class="p-3 text-right space-x-2 whitespace-nowrap">
+                                <button onclick="openCategoryEditModal('{{ cat.id }}', '{{ cat.name }}', '{{ cat.price }}', '{{ cat.image_url }}', '{{ cat.description }}')" 
+                                    class="bg-yellow-600 hover:bg-yellow-500 text-white text-xs px-3 py-1 rounded-lg">
+                                    <i class="fa-solid fa-pen-to-square mr-1"></i> แก้ไข
+                                </button>
+                                <form method="POST" class="inline-block ml-2" onsubmit="return confirm('ยืนยันลบประเภท {{ cat.name }}? (ถ้ามีสต็อกเหลือจะลบไม่ได้)');">
+                                    <input type="hidden" name="action" value="delete_category">
+                                    <input type="hidden" name="category_id" value="{{ cat.id }}">
+                                    <button type="submit" class="bg-red-600 hover:bg-red-500 text-white text-xs px-3 py-1 rounded-lg">
+                                        <i class="fa-solid fa-trash-can"></i> ลบ
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="glass p-6 rounded-2xl border border-slate-700 shadow-xl">
+            <h3 class="text-xl font-bold text-white mb-4 border-b border-slate-700 pb-2"><i class="fa-solid fa-plus-circle text-blue-400 mr-2"></i> เพิ่มหมวดหมู่ใหม่</h3>
+            <form method="POST" class="grid md:grid-cols-4 gap-4">
+                <input type="hidden" name="action" value="add_cat">
+                <input type="text" name="name" placeholder="ชื่อสินค้า" required class="col-span-2 bg-slate-900 border border-slate-600 rounded p-2 text-white">
+                <input type="number" step="0.01" name="price" placeholder="ราคา (บาท)" required class="col-span-1 bg-slate-900 border border-slate-600 rounded p-2 text-white">
+                <input type="text" name="image_url" placeholder="URL รูปภาพ" class="col-span-1 bg-slate-900 border border-slate-600 rounded p-2 text-white">
+                <input type="text" name="desc" placeholder="คำอธิบายสั้นๆ" class="col-span-4 bg-slate-900 border border-slate-600 rounded p-2 text-white">
+                <button class="bg-blue-600 hover:bg-blue-500 text-white font-bold rounded p-2 col-span-4 mt-2">เพิ่มสินค้า</button>
+            </form>
+        </div>
+
+        <div class="glass p-6 rounded-2xl border border-slate-700 shadow-xl">
+            <h3 class="text-xl font-bold text-white mb-4 border-b border-slate-700 pb-2"><i class="fa-solid fa-box-open text-green-400 mr-2"></i> เติมสต็อกสินค้า</h3>
+            <form method="POST">
+                <input type="hidden" name="action" value="add_stock">
+                <div class="mb-4">
+                    <label class="block text-slate-400 mb-2">เลือกสินค้า</label>
+                    <select name="category_id" class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-white">
+                        {% for c in categories %}
+                        <option value="{{ c.id }}">{{ c.name }} (คงเหลือ: {{ stock_info.get(c.id, 0) }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-slate-400 mb-2">ข้อมูลสินค้า (1 บรรทัด = 1 ชิ้น)</label>
+                    <textarea name="data" rows="5" class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-white font-mono placeholder-slate-600" placeholder="user:pass&#10;user:pass"></textarea>
+                </div>
+                <button class="bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-6 rounded shadow-lg">บันทึกสต็อก</button>
+            </form>
+        </div>
+    </div>
+    
+    <div id="tab-users" class="hidden animate-fade-in">
+        <div class="glass p-8 rounded-2xl border border-slate-700 shadow-2xl">
+            <h3 class="text-2xl font-bold text-white mb-6 border-b border-slate-700 pb-4"><i class="fa-solid fa-users text-green-400 mr-2"></i> จัดการสมาชิกทั้งหมด ({{ all_users|length }})</h3>
+            
+            <div class="overflow-x-auto mb-6">
+                <table class="min-w-full text-left text-slate-300">
+                    <thead class="bg-slate-900/50 text-slate-400 uppercase text-xs tracking-wider">
+                        <tr>
+                            <th class="p-3">#ID</th>
+                            <th class="p-3">Username</th>
+                            <th class="p-3">Role</th>
+                            <th class="p-3">Balance</th>
+                            <th class="p-3 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-700/50">
+                        {% for u in all_users %}
+                        <tr class="hover:bg-slate-700/30 transition">
+                            <td class="p-3 font-mono text-xs">{{ u.id }}</td>
+                            <td class="p-3 font-bold text-white">{{ u.username }}</td>
+                            <td class="p-3">
+                                <span class="px-2 py-0.5 rounded text-xs font-semibold {{ 'bg-red-900/50 text-red-300' if u.role == 'admin' else 'bg-blue-900/50 text-blue-300' }}">
+                                    {{ u.role }}
+                                </span>
+                            </td>
+                            <td class="p-3 text-yellow-400 font-mono">฿{{ "{:.2f}".format(u.balance) }}</td>
+                            <td class="p-3 text-right whitespace-nowrap">
+                                <button onclick="openUserModal('{{ u.id }}', '{{ u.username }}', '{{ u.role }}', '{{ '{:.2f}'.format(u.balance) }}')" 
+                                    class="bg-cyan-600 hover:bg-cyan-500 text-white text-xs px-3 py-1 rounded-lg">
+                                    <i class="fa-solid fa-pen-to-square mr-1"></i> แก้ไข
+                                </button>
+                                {% if u.id != current_user.id %}
+                                <form method="POST" class="inline-block ml-2" onsubmit="return confirm('ยืนยันลบผู้ใช้งาน {{ u.username }}?');">
+                                    <input type="hidden" name="action" value="delete_user">
+                                    <input type="hidden" name="user_id" value="{{ u.id }}">
+                                    <button type="submit" class="bg-red-600 hover:bg-red-500 text-white text-xs px-3 py-1 rounded-lg">
+                                        <i class="fa-solid fa-trash-can"></i> ลบ
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="p-6 text-center text-slate-500">ไม่พบผู้ใช้งานในระบบ</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="tab-settings" class="hidden animate-fade-in space-y-8">
+        <div class="glass p-8 rounded-2xl border border-slate-700 shadow-2xl">
+            <h3 class="text-2xl font-bold text-white mb-6 border-b border-slate-700 pb-4"><i class="fa-solid fa-gear text-cyan-400 mr-2"></i> ตั้งค่าข้อมูลเว็บไซต์</h3>
+            <form method="POST" class="space-y-6">
+                <input type="hidden" name="action" value="settings">
+                
+                <div class="space-y-4">
+                    <h4 class="text-lg font-bold text-slate-300 mb-2">1. ข้อมูลทั่วไป</h4>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-slate-400 mb-2">ชื่อเว็บไซต์</label>
+                            <input type="text" name="site_name" value="{{ config.site_name }}" class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-white focus:border-cyan-500 outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 mb-2">ประกาศหน้าเว็บ (Announcement)</label>
+                            <input type="text" name="announcement" value="{{ config.announcement }}" class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-white focus:border-cyan-500 outline-none transition">
+                        </div>
+                    </div>
+                </div>
+                
+                <hr class="border-slate-700 my-4">
+
+                <div class="space-y-4">
+                    <h4 class="text-lg font-bold text-slate-300 mb-2">2. ระบบการเงิน (Topup)</h4>
+                    <div class="w-full">
+                        <label class="block text-slate-400 mb-2">
+                            <i class="fa-solid fa-wallet text-orange-400 mr-1"></i> เบอร์วอลเล็ทรับเงิน (TrueMoney Angpao)
+                        </label>
+                        <input type="text" name="truemoney_phone" value="{{ config.truemoney_phone }}" 
+                               placeholder="08xxxxxxxx (จำเป็นสำหรับระบบรับซอง)" 
+                               class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-white focus:border-orange-500 outline-none transition">
+                        <p class="text-xs text-slate-500 mt-1">เบอร์นี้จะใช้รับยอดเงินจากซองอั่งเปาอัตโนมัติ (ใส่เบอร์ที่มีบัญชี TrueMoney)</p>
+                    </div>
+                </div>
+
+                <hr class="border-slate-700 my-4">
+
+                <div class="space-y-4">
+                    <h4 class="text-lg font-bold text-slate-300 mb-2">3. ข้อมูลติดต่อ</h4>
+                    <div>
+                        <label class="block text-slate-400 mb-2">ลิงก์ติดต่อเรา (เช่น Facebook, Line)</label>
+                        <input type="text" name="contact_url" value="{{ config.contact_url }}" placeholder="https://..." class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-white focus:border-pink-500 outline-none transition">
+                    </div>
+                </div>
+
+                <button class="w-full bg-gradient-to-r from-orange-600 to-pink-600 hover:from-orange-500 hover:to-pink-500 text-white font-bold py-3 rounded-lg text-lg mt-4 shadow-lg transition transform hover:scale-[1.01]">
+                    <i class="fa-solid fa-save mr-2"></i> บันทึกการเปลี่ยนแปลง
+                </button>
+            </form>
+        </div>
+        
+        <div class="glass p-8 rounded-2xl border border-slate-700 shadow-2xl">
+            <h3 class="text-2xl font-bold text-white mb-6 border-b border-slate-700 pb-4"><i class="fa-solid fa-images text-pink-400 mr-2"></i> จัดการแบนเนอร์ (Slider)</h3>
+            
+            <form method="POST" class="mb-8 p-4 bg-slate-900/50 rounded-lg">
+                <h4 class="text-lg font-bold text-white mb-3">เพิ่มแบนเนอร์ใหม่</h4>
+                <input type="hidden" name="action" value="add_banner">
+                <div class="flex gap-2">
+                    <input type="text" name="banner_url" placeholder="URL รูปภาพแบนเนอร์ (แนะนำ 1200x400)" required class="flex-1 bg-slate-800 border border-slate-600 rounded p-3 text-white">
+                    <button class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-6 rounded shadow-lg whitespace-nowrap"><i class="fa-solid fa-plus mr-2"></i> เพิ่ม</button>
+                </div>
+            </form>
+            
+            <h4 class="text-lg font-bold text-white mb-3 flex justify-between items-center">
+                รายการแบนเนอร์ทั้งหมด ({{ banners|length }})
+                {% if banners %}
+                <form method="POST" onsubmit="return confirm('ยืนยันการลบแบนเนอร์ทั้งหมด?');">
+                    <input type="hidden" name="action" value="delete_all_banners">
+                    <button type="submit" class="text-red-400 hover:text-red-300 text-sm font-normal"><i class="fa-solid fa-trash-can mr-1"></i> ลบทั้งหมด</button>
+                </form>
+                {% endif %}
+            </h4>
+            
+            <div class="space-y-3">
+                {% for b in banners %}
+                <div class="flex items-center bg-slate-800/70 p-3 rounded-lg border border-slate-700 group hover:border-slate-500 transition">
+                    <span class="text-slate-500 mr-4 font-mono">#{{ b.id }}</span>
+                    <div class="flex-1 flex items-center gap-4 overflow-hidden">
+                        <img src="{{ b.url }}" class="h-10 w-20 object-cover rounded bg-slate-900" alt="Banner">
+                        <a href="{{ b.url }}" target="_blank" class="truncate text-sm text-blue-400 hover:underline">{{ b.url }}</a>
+                    </div>
+                    <form method="POST" class="ml-4" onsubmit="return confirm('ยืนยันลบแบนเนอร์ #{{ b.id }}?');">
+                        <input type="hidden" name="action" value="delete_banner">
+                        <input type="hidden" name="banner_id" value="{{ b.id }}">
+                        <button type="submit" class="text-red-500 hover:text-red-400 p-2 rounded hover:bg-slate-700 transition"><i class="fa-solid fa-xmark"></i></button>
+                    </form>
+                </div>
+                {% else %}
+                <p class="text-slate-500 text-center py-4 bg-slate-900/30 rounded border border-dashed border-slate-700">ยังไม่มีแบนเนอร์</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="editCategoryModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] hidden backdrop-blur-sm" onclick="if(event.target === this) closeCategoryEditModal()">
+    <div class="bg-slate-800 p-6 rounded-xl w-full max-w-md border border-slate-600 shadow-2xl animate-fade-in-up">
+        <h3 class="text-2xl font-bold mb-4 text-white">แก้ไขประเภทไอดี</h3>
+        <form method="POST">
+            <input type="hidden" name="action" value="edit_category">
+            <input type="hidden" name="category_id" id="edit_cat_id">
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-slate-400 mb-1">ชื่อประเภท</label>
+                    <input type="text" name="name" id="edit_cat_name" required class="w-full bg-slate-900 border border-slate-600 p-3 rounded text-white">
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">ราคา (บาท)</label>
+                    <input type="number" step="0.01" name="price" id="edit_cat_price" required class="w-full bg-slate-900 border border-slate-600 p-3 rounded text-white">
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">URL รูปภาพ</label>
+                    <input type="text" name="image_url" id="edit_cat_image_url" class="w-full bg-slate-900 border border-slate-600 p-3 rounded text-white">
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">คำอธิบายสั้นๆ</label>
+                    <input type="text" name="desc" id="edit_cat_desc" class="w-full bg-slate-900 border border-slate-600 p-3 rounded text-white">
+                </div>
+            </div>
+
+            <div class="flex space-x-3 mt-6">
+                <button type="button" onclick="closeCategoryEditModal()" class="flex-1 bg-slate-600 hover:bg-slate-500 text-white p-3 rounded font-bold">ยกเลิก</button>
+                <button type="submit" class="flex-1 bg-green-600 hover:bg-green-500 text-white p-3 rounded font-bold">บันทึก</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="userModal" class="fixed inset-0 z-[100] hidden">
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeUserModal()"></div>
+    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-lg">
+        <div class="glass p-6 rounded-2xl border border-slate-600 shadow-2xl animate-fade-in-up">
+            <h3 class="text-2xl font-bold text-white mb-6">แก้ไขข้อมูลผู้ใช้งาน <span id="modal_user_name_display" class="text-cyan-400"></span></h3>
+            <form method="POST">
+                <input type="hidden" name="action" value="edit_user">
+                <input type="hidden" name="user_id" id="modal_user_id">
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-slate-400 mb-1">ชื่อผู้ใช้ (Username)</label>
+                        <input type="text" name="username" id="modal_username" required class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 mb-1">บทบาท (Role)</label>
+                        <select name="role" id="modal_role" required class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-white">
+                            <option value="member">member</option>
+                            <option value="admin">admin</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 mb-1">ยอดเงิน (Balance / Point)</label>
+                        <input type="number" step="0.01" name="balance" id="modal_balance" required class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-white">
+                    </div>
+                    <div class="pt-4 border-t border-slate-700">
+                        <label class="block text-red-400 mb-1">เปลี่ยนรหัสผ่านใหม่ (ว่างไว้ถ้าไม่เปลี่ยน)</label>
+                        <input type="password" name="new_password" placeholder="New Password" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-white">
+                    </div>
+                </div>
+
+                <div class="flex gap-3 mt-6">
+                    <button type="button" onclick="closeUserModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-lg font-bold">ยกเลิก</button>
+                    <button type="submit" class="flex-1 bg-green-600 hover:bg-green-500 text-white py-3 rounded-lg font-bold shadow-lg shadow-green-500/30">บันทึก</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Tab Switching Logic
+    function setTab(tabName) {
+        const tabs = ['dashboard', 'topup_pending', 'stock', 'settings', 'users'];
+        tabs.forEach(t => {
+            const tabElement = document.getElementById('tab-' + t);
+            const buttonElement = document.getElementById('btn-' + t);
+            
+            if (tabElement) {
+                tabElement.classList.toggle('hidden', t !== tabName);
+            }
+            
+            if (buttonElement) {
+                // Reset styling
+                buttonElement.className = "px-6 py-2 rounded-md text-sm font-bold transition text-slate-400 hover:text-white whitespace-nowrap";
+                if (t === tabName) {
+                    buttonElement.className += " bg-slate-600 text-white shadow";
+                }
+            }
+        });
+    }
+    document.addEventListener('DOMContentLoaded', () => { setTab('dashboard'); });
+
+    // Category Modal Functions
+    function openCategoryEditModal(id, name, price, imageUrl, desc) {
+        document.getElementById('edit_cat_id').value = id;
+        document.getElementById('edit_cat_name').value = name;
+        document.getElementById('edit_cat_price').value = parseFloat(price).toFixed(2); 
+        document.getElementById('edit_cat_image_url').value = imageUrl;
+        document.getElementById('edit_cat_desc').value = desc;
+        document.getElementById('editCategoryModal').classList.remove('hidden');
+    }
+
+    function closeCategoryEditModal() {
+        document.getElementById('editCategoryModal').classList.add('hidden');
+    }
+
+    // User Modal Functions
+    function openUserModal(id, username, role, balance) {
+        document.getElementById('modal_user_id').value = id;
+        document.getElementById('modal_user_name_display').innerText = username;
+        document.getElementById('modal_username').value = username;
+        document.getElementById('modal_role').value = role;
+        document.getElementById('modal_balance').value = parseFloat(balance).toFixed(2);
+        document.getElementById('userModal').classList.remove('hidden');
+    }
+
+    function closeUserModal() {
+        document.getElementById('userModal').classList.add('hidden');
+    }
+</script>
+{% endblock %}
